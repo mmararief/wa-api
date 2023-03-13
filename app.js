@@ -110,13 +110,15 @@ client.on('message', async msg => {
 
             const video = ytdl(url, { quality: 'highest' });
 
-            client.sendMessage(msg.from, 'Sedang memproses video, harap tunggu...');
+            client.sendMessage(msg.from, 'Amay edang memproses video, harap tunggu...');
 
             const stream = video.pipe(fs.createWriteStream(`${videoInfo.videoDetails.title}.mp4`));
 
             stream.on('finish', () => {
+                const media = MessageMedia.fromFilePath(`${videoInfo.videoDetails.title}.mp4`);
+
                 client.sendMessage(msg.from, `Berhasil mengunduh video ${videoInfo.videoDetails.title}`);
-                client.sendMessage(msg.from, fs.readFileSync(`${videoInfo.videoDetails.title}.mp4`), {sendMediaAsDocument: true});
+                client.sendMessage(msg.from, media, {sendMediaAsDocument: true});
             });
         } catch (error) {
             console.error(error);
