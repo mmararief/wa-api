@@ -14,6 +14,8 @@ const fs = require('fs');
 
 const ytdl = require('ytdl-core');
 
+const axios = require('axios');
+
 
 const port = process.env.PORT || 8000;
 
@@ -101,77 +103,65 @@ client.on('message', async msg => {
 
 
     if (msg.body.toLowerCase().startsWith('!yt')) {
-
-        const command = msg.body.split(' ');
-
-        const url = command[1];
-
-        const format = command[2] || 'mp4';
-
-
+        const url = msg.body.substring(9);
 
         try {
-
             const videoInfo = await ytdl.getInfo(url);
-
-
-
-            const content = format === 'mp3' ? 'audio' : 'konten';
-
-            client.sendMessage(msg.from, `Amay Sedang memproses ${content}, harap tunggu ya masbro`);
-
-
 
             const video = ytdl(url, { quality: 'highest' });
 
+            client.sendMessage(msg.from, 'Sedang memproses video, harap tunggu...');
 
-
-            const stream = video.pipe(fs.createWriteStream(`${videoInfo.videoDetails.title}.${format}`));
-
-
+            const stream = video.pipe(fs.createWriteStream(`${videoInfo.videoDetails.title}.mp4`));
 
             stream.on('finish', () => {
-
-            const media = MessageMedia.fromFilePath(`${videoInfo.videoDetails.title}.${format}`);
-
-
-
-            const successMsg = format === 'mp3' ? 'Berhasil mengunduh audio' : 'Berhasil mengunduh video';
-
-            client.sendMessage(msg.from, successMsg);
-
-            client.sendMessage(msg.from, media, { sendMediaAsDocument: true });
-
-            fs.unlink(`${videoInfo.videoDetails.title}.${format}`, (err) => {
-
-                if (err) {
-
-                  console.error(err);
-
-                  return;
-
-                }
-
-                console.log('File telah dihapus');
-
-              });
-
-            
-
-
-
-            
-
+                client.sendMessage(msg.from, `Berhasil mengunduh video ${videoInfo.videoDetails.title}`);
+                client.sendMessage(msg.from, fs.readFileSync(`${videoInfo.videoDetails.title}.mp4`), {sendMediaAsDocument: true});
             });
-
         } catch (error) {
-
             console.error(error);
-
-            msg.reply('Terjadi kesalahan saat mengunduh video / link belum di tambahkan');
-
+            msg.reply('Terjadi kesalahan saat mengunduh video.');
         }
+    }
 
+    if (msg.body === '!1ka28') {
+        try {
+          const response = await axios.get('https://1ka28.000webhostapp.com/jadwalmatkul.php');
+          
+          // Rapihkan data jadwal kuliah dan ubah format hari menjadi 'jum'at'
+          const formattedData = response.data.map(row => {
+            const [kode, hari, namaMatkul, jam, ruangan, dosen] = row;
+            const formattedHari = hari.replace(/&#039;/g, "'");
+            return `Mata Kuliah: ${namaMatkul}\nDosen: ${dosen}\nRuangan: ${ruangan}\nWaktu: ${formattedHari} ${jam}\n\n`;
+          }).join('');
+      
+          // Kirim data API ke pengguna
+          const message = `Jadwal kuliah:\n${formattedData}`;
+          msg.reply(message);
+        } catch (error) {
+          console.error(error);
+          msg.reply('Terjadi kesalahan saat memuat jadwal kuliah.');
+        }
+      }
+      
+  
+  
+    if (msg.body.startsWith('!info')) {
+        const contactId = msg.body.split(' ')[1];
+        const contact = await client.getContactById(contactId);
+        if (!contact) {
+            msg.reply('Kontak tidak ditemukan.');
+            return;
+        }
+        let message = `${contact.name}\nNomor Telepon: ${contact.number}\n`;
+        const profilePicUrl = await contact.getProfilePicUrl();
+        if (profilePicUrl) {
+            message += `Gambar Profil: ${profilePicUrl}\n`;
+        }
+        if (contact.about) {
+            message += `Bio: ${contact.about}`;
+        }
+        msg.reply(message);
     }
 
 
