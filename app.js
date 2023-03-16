@@ -1,49 +1,29 @@
-const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
-
+const { Client, LocalAuth } = require('whatsapp-web.js');
 const express = require('express');
-
 const { body, validationResult } = require('express-validator');
-
 const socketIO = require('socket.io')
-
 const http = require('http')
-
 const qrcode = require('qrcode');
-
 const fs = require('fs');
-
 const ytdl = require('ytdl-core');
-
 const axios = require('axios');
-
 const jwt = require('jsonwebtoken');
 
+express.use(cors());
 
 const port = process.env.PORT || 8000;
 
 
-
-
-
-
 const app = express();
-
 const server = http.createServer(app);
-
 const io = socketIO(server);
 
 app.use(express.json());
-
 app.use(express.urlencoded({ extended: true}));
 
 
-
-
-
 app.get('/', (req, res) => {
-
     res.sendFile('index.html', { root: __dirname });
-
 });
 
 const client = new Client({
@@ -65,71 +45,18 @@ const client = new Client({
   });
 
 
-
-
-
-
-
-
-
 client.on('message', async msg => {
-
     console.log(`seseorang berkata: ${msg.body}`);
-
     if (msg.body == '!ping') {
-
         msg.reply('pong');
-
     }
-
-
 
     if (msg.body.startsWith('!sticker') && msg.type == 'image'){
-
         const media = await msg.downloadMedia();
-
-
-
         client.sendMessage(msg.from, media, {
-
             sendMediaAsSticker: true,
-
         });
-
     }
-
-
-
-    
-
-
-
-    if (msg.body.toLowerCase().startsWith('!yt')) {
-        const url = msg.body.substring(9);
-    
-        try {
-          const videoInfo = await ytdl.getInfo(url);
-    
-          const video = ytdl(url, { quality: 'highest' });
-    
-          client.sendMessage(msg.from, 'Sedang memproses video, harap tunggu...');
-    
-          const stream = video.pipe(
-            fs.createWriteStream(`${videoInfo.videoDetails.title}.mp4`)
-          );
-    
-          stream.on('finish', () => {
-            client.sendMessage(
-              msg.from,
-              `Berhasil mengunduh video ${videoInfo.videoDetails.title}`
-            );
-            client.sendMessage(msg.from, fs.readFileSync(`${videoInfo.videoDetails.title}.mp4`), { sendMediaAsDocument: true });
-          });
-        } catch (error) {
-          console.error(error);
-          msg.reply('Terjadi kesalahan saat mengunduh video.');
-        }
-      }
 
     if (msg.body === '!1ka28') {
         try {
@@ -149,9 +76,7 @@ client.on('message', async msg => {
           console.error(error);
           msg.reply('Terjadi kesalahan saat memuat jadwal kuliah.');
         }
-      }
-      
-  
+      } 
   
     if (msg.body.startsWith('!info')) {
         const contactId = msg.body.split(' ')[1];
@@ -170,152 +95,84 @@ client.on('message', async msg => {
         }
         msg.reply(message);
     }
-
-
-
-
-
-
-
-
-
 });
 
 
-
 client.initialize();
-
-
 
 // socket io
 
 io.on('connection', function(socket){
 
     socket.emit('message', 'Conneting...');
-
     
-
     client.on('qr', (qr) => {
-
         // Generate and scan this code with your phone
-
         console.log('QR RECEIVED', qr , {small: true});
-
         qrcode.toDataURL(qr, (err, url) => {
-
             socket.emit('qr', url);
-
             socket.emit('message', 'QR Code received, scan please');
-
             });
-
         });
-
-
 
     client.on('ready', () => {
-
         socket.emit('ready', 'Whatsapp is ready');
-
         socket.emit('message', 'Whatsapp is ready');
-
         });
 
-
-
     client.on('authenticated', () => {
-
         socket.emit('authenticated', 'Whatsapp is authenticated');
-
         socket.emit('message', 'Whatsapp is authenticated');
-
         console.log('AUTHENTICATED');
-
     });
 
-        
-
     client.on('auth_failure', msg => {
-
         // Fired if session restore was unsuccessful
-
         socket.emit('auth_failure', 'Whatsapp is AUTHENTICATION FAILURE');
-
         socket.emit('message', 'Whatsapp is AUTHENTICATION FAILURE');
-
         console.error('AUTHENTICATION FAILURE', msg);
 
     });
 
-
-
 });
-
-
 
 // send message
 
 app.post('/send-message', [
-
     body('number').notEmpty(),
-
     body('message').notEmpty(),
-
 ], verifyToken, (req, res) => {
-
     const errors = validationResult(req).formatWith(({ msg }) => {
-
         return msg;
-
     });
-
-
-
     if (!errors.isEmpty()) {
-
         return res.status(422).json({
-
             status: false,
-
             message: errors.mapped()
-
         })
-
     }
-
-
-
     const number = req.body.number;
-
     const message = req.body.message;
-
-
-
     client.sendMessage(number, message).then(response => {
-
         res.status(200).json({
-
             status: true,
-
             response: response
-
         });
-
     }).catch(err => {
-
         res.status(500).json({
-
             status: false,
-
             response: err
-
         });
-
     });
-
 });
 
 app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+
+    // Perform authentication logic here, e.g. check if username and password are valid
+    if (username !== 'admin' || password !== 'AdminAmmar') {
+    return res.status(401).json({ message: 'Invalid username or password' });
+    }
     // Your existing login code goes here
     const user = { id: 1, username: 'ammar' };
     const token = jwt.sign({ user }, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkFtbWFyIEFyaWVmIiwiaWF0IjoxNTE2MjM5MDIyfQ.tAMImjGRibpUGRWpuCJFoj1T0QCxK6vtmPViq104zV4');
@@ -342,10 +199,6 @@ function verifyToken(req, res, next) {
   }
   
 
-
-
 server.listen(port, function () {
-
     console.log('App running on *: ' + port);
-
 });
