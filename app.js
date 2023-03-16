@@ -8,16 +8,19 @@ const fs = require('fs');
 const ytdl = require('ytdl-core');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
+const cors = require('cors');
 
-express.use(cors());
 
 const port = process.env.PORT || 8000;
 
 
 const app = express();
+
+
+
 const server = http.createServer(app);
 const io = socketIO(server);
-
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}));
 
