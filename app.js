@@ -29,6 +29,10 @@ app.get('/', (req, res) => {
     res.sendFile('index.html', { root: __dirname });
 });
 
+app.get('/token', (req, res) => {
+  res.sendFile('token.html', { root: __dirname });
+});
+
 const client = new Client({
     restartOnAuthFail: true,
     puppeteer: {

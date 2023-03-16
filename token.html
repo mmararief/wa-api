@@ -7,7 +7,7 @@
 </head>
 <body>
 	<div class="container mt-5">
-		<h2>Login Form</h2>
+		<h2>Get Token</h2>
 		<form id="login-form">
 			<div class="form-group">
 				<label for="username">Username:</label>
@@ -19,7 +19,17 @@
 			</div>
 			<button type="submit" class="btn btn-primary">Submit</button>
 		</form>
+		
+		<div class="mt-3">
+			<h4>Token:</h4>
+			<div class="card">
+				<div class="card-body">
+					<p id="token"></p>
+				</div>
+			</div>
+		</div>
 	</div>
+	
 	<!-- Load Bootstrap JS -->
 	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
@@ -43,7 +53,8 @@
 			.then((response) => {
 			  const token = response.data.token;
 			  console.log(token);
-			  // Lakukan tindakan setelah berhasil login
+			  // Tampilkan token pada halaman HTML
+			  document.getElementById('token').innerHTML = token;
 			})
 			.catch((error) => {
 			  console.log(error);
