@@ -142,7 +142,6 @@ io.on('connection', function(socket){
     });
 
 });
-
 // send message
 
 app.post('/send-message', [
