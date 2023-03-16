@@ -16,6 +16,8 @@ const ytdl = require('ytdl-core');
 
 const axios = require('axios');
 
+const jwt = require('jsonwebtoken');
+
 
 const port = process.env.PORT || 8000;
 
@@ -104,27 +106,30 @@ client.on('message', async msg => {
 
     if (msg.body.toLowerCase().startsWith('!yt')) {
         const url = msg.body.substring(9);
-
+    
         try {
-            const videoInfo = await ytdl.getInfo(url);
-
-            const video = ytdl(url, { quality: 'highest' });
-
-            client.sendMessage(msg.from, 'Amay edang memproses video, harap tunggu...');
-
-            const stream = video.pipe(fs.createWriteStream(`${videoInfo.videoDetails.title}.mp4`));
-
-            stream.on('finish', () => {
-                const media = MessageMedia.fromFilePath(`${videoInfo.videoDetails.title}.mp4`);
-
-                client.sendMessage(msg.from, `Berhasil mengunduh video ${videoInfo.videoDetails.title}`);
-                client.sendMessage(msg.from, media, {sendMediaAsDocument: true});
-            });
+          const videoInfo = await ytdl.getInfo(url);
+    
+          const video = ytdl(url, { quality: 'highest' });
+    
+          client.sendMessage(msg.from, 'Sedang memproses video, harap tunggu...');
+    
+          const stream = video.pipe(
+            fs.createWriteStream(`${videoInfo.videoDetails.title}.mp4`)
+          );
+    
+          stream.on('finish', () => {
+            client.sendMessage(
+              msg.from,
+              `Berhasil mengunduh video ${videoInfo.videoDetails.title}`
+            );
+            client.sendMessage(msg.from, fs.readFileSync(`${videoInfo.videoDetails.title}.mp4`), { sendMediaAsDocument: true });
+          });
         } catch (error) {
-            console.error(error);
-            msg.reply('Terjadi kesalahan saat mengunduh video.');
+          console.error(error);
+          msg.reply('Terjadi kesalahan saat mengunduh video.');
         }
-    }
+      }
 
     if (msg.body === '!1ka28') {
         try {
@@ -256,7 +261,7 @@ app.post('/send-message', [
 
     body('message').notEmpty(),
 
-], (req, res) => {
+], verifyToken, (req, res) => {
 
     const errors = validationResult(req).formatWith(({ msg }) => {
 
@@ -310,6 +315,32 @@ app.post('/send-message', [
 
 });
 
+app.post('/login', (req, res) => {
+    // Your existing login code goes here
+    const user = { id: 1, username: 'ammar' };
+    const token = jwt.sign({ user }, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkFtbWFyIEFyaWVmIiwiaWF0IjoxNTE2MjM5MDIyfQ.tAMImjGRibpUGRWpuCJFoj1T0QCxK6vtmPViq104zV4');
+    res.json({ token });
+  });
+
+function verifyToken(req, res, next) {
+    const bearerHeader = req.headers.authorization;
+  
+    if (typeof bearerHeader !== 'undefined') {
+      const bearerToken = bearerHeader.split(' ')[1];
+      req.token = bearerToken;
+      jwt.verify(bearerToken, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkFtbWFyIEFyaWVmIiwiaWF0IjoxNTE2MjM5MDIyfQ.tAMImjGRibpUGRWpuCJFoj1T0QCxK6vtmPViq104zV4', (err, authData) => {
+        if (err) {
+          res.sendStatus(403);
+        } else {
+          req.authData = authData;
+          next();
+        }
+      });
+    } else {
+      res.sendStatus(403);
+    }
+  }
+  
 
 
 
