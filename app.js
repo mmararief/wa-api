@@ -65,6 +65,23 @@ client.on('message', async msg => {
         });
     }
 
+    if (msg.body === '!tugas') {
+      try {
+        const response = await axios.get('https://apivclass.herokuapp.com/upcoming');
+        const data = response.data;
+        let message = '';
+        data.forEach(tugas => {
+          message += `Judul: ${tugas.name}\nKeterangan: ${tugas.description}\nDeadline: ${tugas.date}\nLink: ${tugas.link}\n\n`;
+        });
+        await msg.reply(`Berikut adalah daftar tugas:\n${message}`);
+      } catch (error) {
+        console.error(error);
+        await msg.reply('Terjadi kesalahan saat memuat data tugas.');
+      }
+    }
+      
+    
+
     if (msg.body === '!1ka28') {
         try {
           const response = await axios.get('https://1ka28.000webhostapp.com/jadwalmatkul.php');
@@ -171,6 +188,7 @@ app.post('/send-message', [
         });
     });
 });
+
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
