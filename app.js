@@ -160,10 +160,10 @@ io.on('connection', function(socket){
                         let message = '';
 
                         newData.forEach(tugas => {
-                            message += `Judul: ${tugas.name}\nKeterangan: ${tugas.description}\nDeadline: ${tugas.date}\nLink: ${tugas.link}\n`;
+                            message += `Judul: ${tugas.name}\nKeterangan: ${tugas.description}\nDeadline: ${tugas.date}\nLink: ${tugas.link}\n\n`;
                         });
 
-                        client.sendMessage(chatId, `Ada Perubahan Tugas :\n${message}`);
+                        client.sendMessage(chatId, message);
                     }
                 })
                 .catch(error => {
