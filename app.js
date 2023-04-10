@@ -4,7 +4,6 @@ const { body, validationResult } = require('express-validator');
 const socketIO = require('socket.io')
 const http = require('http')
 const qrcode = require('qrcode');
-
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
@@ -57,7 +56,7 @@ const client = new Client({
 
 
 client.on('message', async msg => {
-    console.log(`seseorang berkata: ${msg.body}`);
+    console.log(`Message received from ${msg.from}: ${msg.body}`);
     if (msg.body == '!ping') {
         msg.reply('pong');
     }
@@ -130,24 +129,6 @@ client.on('message', async msg => {
 
 client.initialize();
 
-// Kirim pesan WhatsApp jika terdapat perubahan pada API endpoint
-app.post('/webhook', async (req, res) => {
-  try {
-    const response = await axios.get('https://apivclass.herokuapp.com/upcoming');
-    const data = response.data;
-    if (JSON.stringify(lastData) !== JSON.stringify(data)) {
-      if (data.length > 0) {
-        const message = `Ada ${data.length} tugas baru di local https://apivclass.herokuapp.com/upcoming`;
-        await client.sendMessage('628872588744@c.us', message);
-      }
-      lastData = data;
-    }
-    res.status(200).send('OK');
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal Server Error');
-  }
-});
 // socket io
 
 io.on('connection', function(socket){
@@ -166,6 +147,30 @@ io.on('connection', function(socket){
     client.on('ready', () => {
         socket.emit('ready', 'Whatsapp is ready');
         socket.emit('message', 'Whatsapp is ready');
+        const chatId = '628872588744@c.us'; // ganti dengan nomor WhatsApp 
+        let lastMessage = '';
+
+        setInterval(() => {
+            axios.get('https://apivclass.herokuapp.com/upcoming')
+                .then(response => {
+                    const newData = response.data;
+
+                    if (JSON.stringify(newData) !== lastMessage) {
+                        lastMessage = JSON.stringify(newData);
+                        let message = '';
+
+                        newData.forEach(tugas => {
+                            message += `Judul: ${tugas.name}\nKeterangan: ${tugas.description}\nDeadline: ${tugas.date}\nLink: ${tugas.link}\n`;
+                        });
+
+                        client.sendMessage(chatId, `Ada Perubahan Tugas :\n${message}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to fetch data from API endpoint:', error);
+                });
+        }, 60000);
+
         });
 
     client.on('authenticated', () => {
