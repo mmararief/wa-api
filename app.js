@@ -9,6 +9,7 @@ const ytdl = require('ytdl-core');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const { createCanvas, loadImage } = require('canvas');
 
 
 const port = process.env.PORT || 8000;
@@ -120,6 +121,21 @@ client.on('message', async msg => {
         msg.reply(message);
     }
 });
+
+// Check for new data on the API every 5 minutes
+setInterval(async () => {
+  try {
+    const response = await axios.get('https://apivclass.herokuapp.com/upcoming');
+    const data = response.data;
+    if (data.length > 0) {
+      // Send message to the specified number
+      const message = `Ada ${data.length} tugas baru di https://apivclass.herokuapp.com/upcoming`;
+      await client.sendMessage('628872588744@c.us', message);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}, 5 * 60 * 1000); // 5 minutes
 
 
 client.initialize();
