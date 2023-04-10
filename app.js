@@ -73,10 +73,12 @@ client.on('message', async msg => {
         const response = await axios.get('https://apivclass.herokuapp.com/upcoming');
         const data = response.data;
         let message = '';
+        const now = new Date();
+        message += `Update tugas pada tanggal ${now.toLocaleDateString()} pukul ${now.toLocaleTimeString()}\n\n`;
         data.forEach(tugas => {
           message += `📝 *${tugas.name}*\n📅 Deadline: ${tugas.date}\n🔗 Link: ${tugas.link}\n\n`;
         });
-        await msg.reply(`Berikut adalah daftar tugas:\n${message}`);
+        await msg.reply(message);
       } catch (error) {
         console.error(error);
         await msg.reply('Terjadi kesalahan saat memuat data tugas.');
@@ -158,9 +160,10 @@ io.on('connection', function(socket){
                     if (JSON.stringify(newData) !== lastMessage) {
                         lastMessage = JSON.stringify(newData);
                         let message = '';
-
+                        const now = new Date();
+                        message += `Bot melihat ada perubahan tugas tanggal ${now.toLocaleDateString()} pukul ${now.toLocaleTimeString()}\n\n`;
                         newData.forEach(tugas => {
-                            message += `Judul: ${tugas.name}\nDeadline: ${tugas.date}\nLink: ${tugas.link}\n\n`;
+                            message += `📝 *${tugas.name}*\n📅 Deadline: ${tugas.date}\n🔗 Link: ${tugas.link}\n\n`;
                         });
 
                         client.sendMessage(chatId, message);
@@ -170,6 +173,7 @@ io.on('connection', function(socket){
                     console.error('Failed to fetch data from API endpoint:', error);
                 });
         }, 60000);
+
 
         });
 
