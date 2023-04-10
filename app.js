@@ -73,9 +73,10 @@ client.on('message', async msg => {
         const response = await axios.get('https://apivclass.herokuapp.com/upcoming');
         const data = response.data;
         let message = '';
-        data.forEach(tugas => {
-          message += `Judul: ${tugas.name}\nKeterangan: ${tugas.description}\nDeadline: ${tugas.date}\nLink: ${tugas.link}\n\n`;
+        newData.forEach(tugas => {
+          message += `📝 *${tugas.name}*\n📅 Deadline: ${tugas.date}\n🔗 Link: ${tugas.link}\n\n`;
         });
+        
         await msg.reply(`Berikut adalah daftar tugas:\n${message}`);
       } catch (error) {
         console.error(error);
@@ -160,8 +161,9 @@ io.on('connection', function(socket){
                         let message = '';
 
                         newData.forEach(tugas => {
-                            message += `Judul: ${tugas.name}\nKeterangan: ${tugas.description}\nDeadline: ${tugas.date}\nLink: ${tugas.link}\n\n`;
+                          message += `📝 *${tugas.name}*\n📅 Deadline: ${tugas.date}\n🔗 Link: ${tugas.link}\n\n`;
                         });
+                        
 
                         client.sendMessage(chatId, message);
                     }
