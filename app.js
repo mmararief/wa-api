@@ -4,12 +4,11 @@ const { body, validationResult } = require('express-validator');
 const socketIO = require('socket.io')
 const http = require('http')
 const qrcode = require('qrcode');
-const fs = require('fs');
-const ytdl = require('ytdl-core');
+
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const { createCanvas, loadImage } = require('canvas');
+
 
 
 const port = process.env.PORT || 8000;
@@ -33,6 +32,10 @@ app.get('/', (req, res) => {
 app.get('/token', (req, res) => {
   res.sendFile('token.html', { root: __dirname });
 });
+
+// Simpan data terakhir dari API
+let lastData = [];
+
 
 const client = new Client({
     restartOnAuthFail: true,
@@ -122,24 +125,29 @@ client.on('message', async msg => {
     }
 });
 
-// Check for new data on the API every 5 minutes
-setInterval(async () => {
-  try {
-    const response = await axios.get('https://apivclass.herokuapp.com/upcoming');
-    const data = response.data;
-    if (data.length > 0) {
-      // Send message to the specified number
-      const message = `Ada ${data.length} tugas baru di https://apivclass.herokuapp.com/upcoming`;
-      await client.sendMessage('628872588744@c.us', message);
-    }
-  } catch (error) {
-    console.error(error);
-  }
-}, 5 * 60 * 1000); // 5 minutes
+
 
 
 client.initialize();
 
+// Kirim pesan WhatsApp jika terdapat perubahan pada API endpoint
+app.post('/webhook', async (req, res) => {
+  try {
+    const response = await axios.get('https://apivclass.herokuapp.com/upcoming');
+    const data = response.data;
+    if (JSON.stringify(lastData) !== JSON.stringify(data)) {
+      if (data.length > 0) {
+        const message = `Ada ${data.length} tugas baru di local https://apivclass.herokuapp.com/upcoming`;
+        await client.sendMessage('628872588744@c.us', message);
+      }
+      lastData = data;
+    }
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 // socket io
 
 io.on('connection', function(socket){
@@ -175,7 +183,6 @@ io.on('connection', function(socket){
     });
 
 });
-// send message
 
 app.post('/send-message', [
     body('number').notEmpty(),
