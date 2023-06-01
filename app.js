@@ -107,23 +107,6 @@ client.on('message', async msg => {
         }
       } 
   
-    if (msg.body.startsWith('!info')) {
-        const contactId = msg.body.split(' ')[1];
-        const contact = await client.getContactById(contactId);
-        if (!contact) {
-            msg.reply('Kontak tidak ditemukan.');
-            return;
-        }
-        let message = `${contact.name}\nNomor Telepon: ${contact.number}\n`;
-        const profilePicUrl = await contact.getProfilePicUrl();
-        if (profilePicUrl) {
-            message += `Gambar Profil: ${profilePicUrl}\n`;
-        }
-        if (contact.about) {
-            message += `Bio: ${contact.about}`;
-        }
-        msg.reply(message);
-    }
 });
 
 
