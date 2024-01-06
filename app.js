@@ -61,6 +61,7 @@ client.on('message', async msg => {
         msg.reply('pong');
     }
 
+
     if (msg.body.startsWith('!sticker') && msg.type == 'image'){
         const media = await msg.downloadMedia();
         client.sendMessage(msg.from, media, {
@@ -106,6 +107,27 @@ client.on('message', async msg => {
           msg.reply('Terjadi kesalahan saat memuat jadwal kuliah.');
         }
       } 
+
+
+      if (msg.body === '/loker') {
+        try {
+          const response = await axios.get('https://api-loker-production.up.railway.app/loker');
+          
+          const data = response.data;
+          let message = '----------------------------------------\n';
+          
+          data.forEach(loker => {
+            message += `📝 *${loker.title}*\n📅 tanggal: ${loker.date}\n🔗 Link: ${loker.detailsUrl}\n\n`;
+        });
+
+          msg.reply(message);
+        } catch (error) {
+          console.error(error);
+          msg.reply('Terjadi kesalahan saat memuat loker.');
+        }
+      } 
+
+      
   
 });
 
@@ -129,36 +151,38 @@ io.on('connection', function(socket){
             });
         });
 
-    client.on('ready', () => {
-        socket.emit('ready', 'Whatsapp is ready');
-        socket.emit('message', 'Whatsapp is ready');
-        const chatId = '628872588744@c.us'; // ganti dengan nomor WhatsApp 
-        let lastMessage = '';
-
-        setInterval(() => {
-            axios.get('https://apivclass.herokuapp.com/upcoming')
-                .then(response => {
-                    const newData = response.data;
-
-                    if (JSON.stringify(newData) !== lastMessage) {
-                        lastMessage = JSON.stringify(newData);
-                        let message = '';
-                        const now = new Date();
-                        message += `Bot melihat ada perubahan tugas tanggal ${now.toLocaleDateString()} pukul ${now.toLocaleTimeString()}\n\n`;
-                        newData.forEach(tugas => {
-                            message += `📝 *${tugas.name}*\n📅 Deadline: ${tugas.date}\n🔗 Link: ${tugas.link}\n\n`;
-                        });
-
-                        client.sendMessage(chatId, message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Failed to fetch data from API endpoint:', error);
-                });
-        }, 60000);
-
-
+        client.on('ready', () => {
+          socket.emit('ready', 'Whatsapp is ready');
+          socket.emit('message', 'Whatsapp is ready');
+          const chatId = '628872588744@c.us'; // Ganti dengan nomor WhatsApp 
+          let lastMessage = '';
+        
+          // Set interval untuk polling data dan mengirim pesan jika ada data terbaru
+          // setInterval(() => {
+          //   sendNotificationIfNewData(chatId, lastMessage);
+          // }, 60000);
         });
+
+
+        // Fungsi untuk mengirim pesan ke nomor tertentu jika ada data terbaru
+// const sendNotificationIfNewData = async (chatId, lastMessage) => {
+//   try {
+//     const response = await axios.get('https://api-loker-production.up.railway.app/loker');
+//     const newData = response.data;
+
+//     if (JSON.stringify(newData) !== lastMessage) {
+//       lastMessage = JSON.stringify(newData);
+//       let message = 'Bot melihat ada loker terbaru\n\n';
+//       newData.forEach(loker => {
+//         message += `📝 *${loker.title}*\n📅 tanggal: ${loker.date}\n🔗 Link: ${loker.detailsUrl}\n\n`;
+//       });
+
+//       client.sendMessage(chatId, message);
+//     }
+//   } catch (error) {
+//     console.error('Failed to fetch data from API endpoint:', error);
+//   }
+// };
 
     client.on('authenticated', () => {
         socket.emit('authenticated', 'Whatsapp is authenticated');
