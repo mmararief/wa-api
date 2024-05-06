@@ -37,6 +37,10 @@ let lastData = [];
 
 
 const client = new Client({
+  webVersionCache: {
+    type: 'remote',
+    remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
+    },
     restartOnAuthFail: true,
     puppeteer: {
       headless: true,
@@ -69,63 +73,63 @@ client.on('message', async msg => {
         });
     }
 
-    if (msg.body === '!tugas') {
-      try {
-        const response = await axios.get('https://apivclass.herokuapp.com/upcoming');
-        const data = response.data;
-        let message = '';
-        const now = new Date();
-        message += `Update tugas pada tanggal ${now.toLocaleDateString()} pukul ${now.toLocaleTimeString()}\n\n`;
-        data.forEach(tugas => {
-          message += `📝 *${tugas.name}*\n📅 Deadline: ${tugas.date}\n🔗 Link: ${tugas.link}\n\n`;
-        });
-        await msg.reply(message);
-      } catch (error) {
-        console.error(error);
-        await msg.reply('Terjadi kesalahan saat memuat data tugas.');
-      }
-    }
+    // if (msg.body === '!tugas') {
+    //   try {
+    //     const response = await axios.get('https://apivclass.herokuapp.com/upcoming');
+    //     const data = response.data;
+    //     let message = '';
+    //     const now = new Date();
+    //     message += `Update tugas pada tanggal ${now.toLocaleDateString()} pukul ${now.toLocaleTimeString()}\n\n`;
+    //     data.forEach(tugas => {
+    //       message += `📝 *${tugas.name}*\n📅 Deadline: ${tugas.date}\n🔗 Link: ${tugas.link}\n\n`;
+    //     });
+    //     await msg.reply(message);
+    //   } catch (error) {
+    //     console.error(error);
+    //     await msg.reply('Terjadi kesalahan saat memuat data tugas.');
+    //   }
+    // }
       
     
 
-    if (msg.body === '!1ka28') {
-        try {
-          const response = await axios.get('https://1ka28.000webhostapp.com/jadwalmatkul.php');
+    // if (msg.body === '!1ka28') {
+    //     try {
+    //       const response = await axios.get('https://1ka28.000webhostapp.com/jadwalmatkul.php');
           
-          // Rapihkan data jadwal kuliah dan ubah format hari menjadi 'jum'at'
-          const formattedData = response.data.map(row => {
-            const [kode, hari, namaMatkul, jam, ruangan, dosen] = row;
-            const formattedHari = hari.replace(/&#039;/g, "'");
-            return `Mata Kuliah: ${namaMatkul}\nDosen: ${dosen}\nRuangan: ${ruangan}\nWaktu: ${formattedHari} ${jam}\n\n`;
-          }).join('');
+    //       // Rapihkan data jadwal kuliah dan ubah format hari menjadi 'jum'at'
+    //       const formattedData = response.data.map(row => {
+    //         const [kode, hari, namaMatkul, jam, ruangan, dosen] = row;
+    //         const formattedHari = hari.replace(/&#039;/g, "'");
+    //         return `Mata Kuliah: ${namaMatkul}\nDosen: ${dosen}\nRuangan: ${ruangan}\nWaktu: ${formattedHari} ${jam}\n\n`;
+    //       }).join('');
       
-          // Kirim data API ke pengguna
-          const message = `Jadwal kuliah:\n${formattedData}`;
-          msg.reply(message);
-        } catch (error) {
-          console.error(error);
-          msg.reply('Terjadi kesalahan saat memuat jadwal kuliah.');
-        }
-      } 
+    //       // Kirim data API ke pengguna
+    //       const message = `Jadwal kuliah:\n${formattedData}`;
+    //       msg.reply(message);
+    //     } catch (error) {
+    //       console.error(error);
+    //       msg.reply('Terjadi kesalahan saat memuat jadwal kuliah.');
+    //     }
+    //   } 
 
 
-      if (msg.body === '/loker') {
-        try {
-          const response = await axios.get('https://api-loker-production.up.railway.app/loker');
+      // if (msg.body === '/loker') {
+      //   try {
+      //     const response = await axios.get('https://api-loker-production.up.railway.app/loker');
           
-          const data = response.data;
-          let message = '----------------------------------------\n';
+      //     const data = response.data;
+      //     let message = '----------------------------------------\n';
           
-          data.forEach(loker => {
-            message += `📝 *${loker.title}*\n📅 tanggal: ${loker.date}\n🔗 Link: ${loker.detailsUrl}\n\n`;
-        });
+      //     data.forEach(loker => {
+      //       message += `📝 *${loker.title}*\n📅 tanggal: ${loker.date}\n🔗 Link: ${loker.detailsUrl}\n\n`;
+      //   });
 
-          msg.reply(message);
-        } catch (error) {
-          console.error(error);
-          msg.reply('Terjadi kesalahan saat memuat loker.');
-        }
-      } 
+      //     msg.reply(message);
+      //   } catch (error) {
+      //     console.error(error);
+      //     msg.reply('Terjadi kesalahan saat memuat loker.');
+      //   }
+      // } 
 
       
   
