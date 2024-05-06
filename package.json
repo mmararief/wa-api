@@ -17,6 +17,8 @@
     "express-validator": "^6.15.0",
     "http": "^0.0.1-security",
     "jsonwebtoken": "^9.0.0",
+    "mysql": "^2.18.1",
+    "mysql2": "^3.9.7",
     "puppeteer": "^19.7.5",
     "qrcode": "^1.5.1",
     "socket.io": "^4.6.1",

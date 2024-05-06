@@ -19,6 +19,29 @@ const app = express();
 
 const server = http.createServer(app);
 const io = socketIO(server);
+
+const mysql = require('mysql2');
+
+// Konfigurasi koneksi ke database MySQL
+const dbConfig = {
+    host: 'viaduct.proxy.rlwy.net',
+    port: '14615',
+    user: 'root',
+    password: 'fpaLecgRPYsjKhdhpyRdoGZvrTFZZIbl',
+    database: 'railway',
+};
+
+// Membuat koneksi ke database
+const connection = mysql.createConnection(dbConfig);
+
+// Membuka koneksi
+connection.connect(err => {
+    if (err) {
+        console.error('Error connecting to MySQL database:', err);
+        return;
+    }
+    console.log('Connected to MySQL database');
+});
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}));
@@ -32,8 +55,45 @@ app.get('/token', (req, res) => {
   res.sendFile('token.html', { root: __dirname });
 });
 
-// Simpan data terakhir dari API
-let lastData = [];
+const kelompok = [
+  'ALIFYA HARSYARANI',
+  'AMARA LUTHFI VANNESA',
+  'AMELIA FITRI GITALAVANCHA',
+  'ANGGER RIZKY RAMBUDIA',
+  'ANNISA NURUL ASRI',
+  'ARRAHMAN AKMAL',
+  'AUREL FEYBILYA SIMAMORA',
+  'AZZAHRA DANIA INDRIYANI',
+  'DANTY ZAHRA NADHIRA',
+  'DEFANIA ADESTI',
+  'DELLIA PUTRI SANTOSO',
+  'DESVITA DAMAYANTI',
+  'DIMAS NAUFAL HERMAWAN',
+  'DINDA RIFKA TIAS NOVANSA',
+  'DWIKI DIANDRA PUTRA',
+  'FAUZAN DIFA',
+  'HERU MUZAKI ALPIAN',
+  'HUWAIDA ADILLYA PUTRI',
+  'KAYLAH AHLA HANINA',
+  'MIFTA RIZALDIRAHMAT',
+  'MOCH HARIS SAPUTRA',
+  'MUHAMMAD ALIF AL GHIFARI',
+  'MUHAMMAD AMMAR ARIEF',
+  'MUHAMMAD DAFFA RAJENDRA',
+  'MUHAMMAD FAJAR FEBRIAN',
+  'MUHAMMAD NAUFAL HILMY',
+  'MUHAMMAD RYO SETIAWAN',
+  'NAUFAL AMRU',
+  'NISRINA SYIFA',
+  'NOOR SYIVA SYAKIRA WAHDANIE',
+  'RAKHA ADITISNA KUMARA',
+  'RIZKY RAMDHANI KOSWARA',
+  'ROSA LINDA SALSABILA',
+  'SABRINA NAJWA APRILIANTI',
+  'STEFY RUSLANDA',
+  'TRI ANGGORO SAPUTRI',
+];
+
 
 
 const client = new Client({
@@ -72,64 +132,16 @@ client.on('message', async msg => {
             sendMediaAsSticker: true,
         });
     }
-
-    // if (msg.body === '!tugas') {
-    //   try {
-    //     const response = await axios.get('https://apivclass.herokuapp.com/upcoming');
-    //     const data = response.data;
-    //     let message = '';
-    //     const now = new Date();
-    //     message += `Update tugas pada tanggal ${now.toLocaleDateString()} pukul ${now.toLocaleTimeString()}\n\n`;
-    //     data.forEach(tugas => {
-    //       message += `📝 *${tugas.name}*\n📅 Deadline: ${tugas.date}\n🔗 Link: ${tugas.link}\n\n`;
-    //     });
-    //     await msg.reply(message);
-    //   } catch (error) {
-    //     console.error(error);
-    //     await msg.reply('Terjadi kesalahan saat memuat data tugas.');
-    //   }
-    // }
-      
-    
-
-    // if (msg.body === '!1ka28') {
-    //     try {
-    //       const response = await axios.get('https://1ka28.000webhostapp.com/jadwalmatkul.php');
-          
-    //       // Rapihkan data jadwal kuliah dan ubah format hari menjadi 'jum'at'
-    //       const formattedData = response.data.map(row => {
-    //         const [kode, hari, namaMatkul, jam, ruangan, dosen] = row;
-    //         const formattedHari = hari.replace(/&#039;/g, "'");
-    //         return `Mata Kuliah: ${namaMatkul}\nDosen: ${dosen}\nRuangan: ${ruangan}\nWaktu: ${formattedHari} ${jam}\n\n`;
-    //       }).join('');
-      
-    //       // Kirim data API ke pengguna
-    //       const message = `Jadwal kuliah:\n${formattedData}`;
-    //       msg.reply(message);
-    //     } catch (error) {
-    //       console.error(error);
-    //       msg.reply('Terjadi kesalahan saat memuat jadwal kuliah.');
-    //     }
-    //   } 
+    if (msg.body == '!buatkelompok') {
+      const kelompokName = await askQuestion(msg.from, 'Masukkan nama kelompok:');
+      const jumlahKelompok = await askQuestion(msg.from, 'Mau dibuatkan berapa kelompok?');
+      createKelompok(kelompokName, jumlahKelompok, kelompok, msg );
+      msg.reply(`Kelompok ${kelompokName} berhasil dibuat dengan ${jumlahKelompok} kelompok.`);
+  }
 
 
-      // if (msg.body === '/loker') {
-      //   try {
-      //     const response = await axios.get('https://api-loker-production.up.railway.app/loker');
-          
-      //     const data = response.data;
-      //     let message = '----------------------------------------\n';
-          
-      //     data.forEach(loker => {
-      //       message += `📝 *${loker.title}*\n📅 tanggal: ${loker.date}\n🔗 Link: ${loker.detailsUrl}\n\n`;
-      //   });
 
-      //     msg.reply(message);
-      //   } catch (error) {
-      //     console.error(error);
-      //     msg.reply('Terjadi kesalahan saat memuat loker.');
-      //   }
-      // } 
+
 
       
   
@@ -161,32 +173,11 @@ io.on('connection', function(socket){
           const chatId = '628872588744@c.us'; // Ganti dengan nomor WhatsApp 
           let lastMessage = '';
         
-          // Set interval untuk polling data dan mengirim pesan jika ada data terbaru
-          // setInterval(() => {
-          //   sendNotificationIfNewData(chatId, lastMessage);
-          // }, 60000);
+
         });
 
 
-        // Fungsi untuk mengirim pesan ke nomor tertentu jika ada data terbaru
-// const sendNotificationIfNewData = async (chatId, lastMessage) => {
-//   try {
-//     const response = await axios.get('https://api-loker-production.up.railway.app/loker');
-//     const newData = response.data;
 
-//     if (JSON.stringify(newData) !== lastMessage) {
-//       lastMessage = JSON.stringify(newData);
-//       let message = 'Bot melihat ada loker terbaru\n\n';
-//       newData.forEach(loker => {
-//         message += `📝 *${loker.title}*\n📅 tanggal: ${loker.date}\n🔗 Link: ${loker.detailsUrl}\n\n`;
-//       });
-
-//       client.sendMessage(chatId, message);
-//     }
-//   } catch (error) {
-//     console.error('Failed to fetch data from API endpoint:', error);
-//   }
-// };
 
     client.on('authenticated', () => {
         socket.emit('authenticated', 'Whatsapp is authenticated');
@@ -203,6 +194,69 @@ io.on('connection', function(socket){
     });
 
 });
+
+function createKelompok(kelompokName, jumlahKelompok, members, msg) {
+  // Memastikan jumlah anggota cukup untuk dibagi menjadi kelompok
+  if (members.length < jumlahKelompok) {
+      console.error('Jumlah anggota tidak mencukupi untuk dibagi menjadi kelompok');
+      return;
+  }
+
+  // Mengacak anggota untuk mendapatkan urutan acak
+  const shuffledMembers = shuffleArray(members);
+
+  // Variabel untuk menyimpan anggota semua kelompok dalam format yang diinginkan
+  let anggotaAllKelompok = '';
+
+  // Membuat kelompok
+  for (let i = 1; i <= jumlahKelompok; i++) {
+      const namaKelompok = `${kelompokName} ${i}`;
+      const anggotaKelompok = shuffledMembers.slice((i - 1) * Math.ceil(members.length / jumlahKelompok), i * Math.ceil(members.length / jumlahKelompok));
+
+      // Menambahkan anggota kelompok ke variabel anggotaAllKelompok
+      anggotaAllKelompok += `Kelompok ${i}: \n${anggotaKelompok.join('\n')}\n`;
+  }
+
+  const query = 'INSERT INTO kelompok (nama_kelompok, jumlah_anggota, anggota) VALUES (?, ?, ?)';
+  const values = [kelompokName, members.length, anggotaAllKelompok];
+  
+  // Menjalankan query untuk menyimpan kelompok ke database
+  connection.query(query, values, (err, result) => {
+      if (err) {
+          console.error('Error saving kelompok to database:', err);
+          return;
+      }
+      
+      console.log('Kelompok berhasil disimpan ke database');
+
+      // Kirim pesan dengan isi kelompok
+      const chatId = msg.from;
+      client.sendMessage(chatId, `Kelompok ${kelompokName} berhasil dibuat dengan ${jumlahKelompok} kelompok:\n${anggotaAllKelompok}`);
+  });
+}
+
+
+
+// Fungsi untuk mengacak array
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+
+async function askQuestion(sender, question) {
+  client.sendMessage(sender, question);
+  return new Promise(resolve => {
+      client.on('message', async (msg) => {
+          if (msg.from === sender) {
+              resolve(msg.body);
+          }
+      });
+  });
+}
 
 app.post('/send-message', [
     body('number').notEmpty(),
