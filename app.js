@@ -7,19 +7,13 @@ const qrcode = require('qrcode');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-
-
-
+const ytdl = require('ytdl-core');
+const fs = require('fs');
+const { MessageMedia } = require('whatsapp-web.js');
 const port = process.env.PORT || 8000;
-
-
 const app = express();
-
-
-
 const server = http.createServer(app);
 const io = socketIO(server);
-
 const mysql = require('mysql2');
 
 // Konfigurasi koneksi ke database MySQL
@@ -123,6 +117,7 @@ client.on('message', async msg => {
     console.log(`Message received from ${msg.from}: ${msg.body}`);
     if (msg.body == '!ping') {
         msg.reply('pong');
+        console.log(msg.from)
     }
 
 
@@ -134,18 +129,59 @@ client.on('message', async msg => {
     }
     if (msg.body == '!buatkelompok') {
       const kelompokName = await askQuestion(msg.from, 'Masukkan nama kelompok:');
+      const kelompokNameExists = await checkKelompokName(kelompokName);
+      if(kelompokNameExists) {
+          msg.reply('Nama kelompok sudah digunakan, gunakan nama kelompok yang lain.');
+          return;
+      }
       const jumlahKelompok = await askQuestion(msg.from, 'Mau dibuatkan berapa kelompok?');
       createKelompok(kelompokName, jumlahKelompok, kelompok, msg );
       msg.reply(`Kelompok ${kelompokName} berhasil dibuat dengan ${jumlahKelompok} kelompok.`);
   }
 
+  if (msg.body == '!carikelompok') {
+    const kelompokName = await askQuestion(msg.from, 'Masukkan nama kelompok yang ingin dicari:');
+    searchKelompok(kelompokName, msg);
+  }
+
+  if (msg.body.toLowerCase().startsWith('!yt')) {
+    const command = msg.body.split(' ');
+    const url = command[1];
+    const format = command[2] || 'mp4';
+    try {
+        const videoInfo = await ytdl.getInfo(url);
+        const content = format === 'mp3' ? 'audio' : 'konten';
+        const cleanTitle = videoInfo.videoDetails.title.replace(/[\\/:*?"<>|]/g, '');
+        const videoPath = `./${cleanTitle}.${format}`;
+        client.sendMessage(msg.from, `Amay Sedang memproses ${content}, harap tunggu ya masbro`);
+        const video = ytdl(url, { quality: 'highest' });
+        const stream = video.pipe(fs.createWriteStream(videoPath));
+        stream.on('finish', () => {
+            const media = MessageMedia.fromFilePath(videoPath);
+            const successMsg = format === 'mp3' ? 'Berhasil mengunduh audio' : 'Berhasil mengunduh video';
+            client.sendMessage(msg.from, successMsg);
+            client.sendMessage(msg.from, media, { sendMediaAsDocument: true });
+            fs.unlink(videoPath, (err) => {
+                if (err) {
+                    console.error(err);
+                    return;
+                }
+                console.log('File telah dihapus');
+            });
+        });
+    } catch (error) {
+        console.error(error);
+        msg.reply('Terjadi kesalahan saat mengunduh video / link belum di tambahkan');
+    }
+}
+});
 
 
 
 
       
   
-});
+
 
 
 
@@ -195,6 +231,22 @@ io.on('connection', function(socket){
 
 });
 
+
+
+async function checkKelompokName(kelompokName) {
+  return new Promise((resolve, reject) => {
+      const query = 'SELECT COUNT(*) AS count FROM kelompok WHERE nama_kelompok = ?';
+      connection.query(query, [kelompokName], (err, result) => {
+          if (err) {
+              console.error('Error checking kelompok name:', err);
+              reject(err);
+              return;
+          }
+          resolve(result[0].count > 0);
+      });
+  });
+}
+
 function createKelompok(kelompokName, jumlahKelompok, members, msg) {
   // Memastikan jumlah anggota cukup untuk dibagi menjadi kelompok
   if (members.length < jumlahKelompok) {
@@ -232,6 +284,22 @@ function createKelompok(kelompokName, jumlahKelompok, members, msg) {
       // Kirim pesan dengan isi kelompok
       const chatId = msg.from;
       client.sendMessage(chatId, `Kelompok ${kelompokName} berhasil dibuat dengan ${jumlahKelompok} kelompok:\n${anggotaAllKelompok}`);
+  });
+}
+
+async function searchKelompok(kelompokName, msg) {
+  const query = 'SELECT * FROM kelompok WHERE nama_kelompok = ?';
+  connection.query(query, [kelompokName], (err, result) => {
+      if (err) {
+          console.error('Error searching kelompok:', err);
+          msg.reply('Terjadi kesalahan saat mencari kelompok.');
+          return;
+      }
+      if (result.length === 0) {
+          msg.reply(`Kelompok dengan nama ${kelompokName} tidak ditemukan.`);
+      } else {
+          msg.reply(`Kelompok ${kelompokName} ditemukan dengan ${result[0].jumlah_anggota} anggota:\n${result[0].anggota}`);
+      }
   });
 }
 
