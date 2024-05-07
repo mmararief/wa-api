@@ -160,20 +160,23 @@ client.on('message', async msg => {
             const media = MessageMedia.fromFilePath(videoPath);
             const successMsg = format === 'mp3' ? 'Berhasil mengunduh audio' : 'Berhasil mengunduh video';
             client.sendMessage(msg.from, successMsg);
-            client.sendMessage(msg.from, media, { sendMediaAsDocument: true });
-            fs.unlink(videoPath, (err) => {
-                if (err) {
-                    console.error(err);
-                    return;
-                }
-                console.log('File telah dihapus');
+            client.sendMessage(msg.from, media, { sendMediaAsDocument: true }).then(() => {
+                fs.unlink(videoPath, (err) => {
+                    if (err) {
+                        console.error(err);
+                        return;
+                    }
+                    console.log('File telah dihapus');
+                });
             });
         });
     } catch (error) {
         console.error(error);
-        msg.reply('Terjadi kesalahan saat mengunduh video / link belum di tambahkan');
+        msg.reply('Terjadi kesalahan saat mengunduh video / link belum ditambahkan');
     }
 }
+
+
 });
 
 
