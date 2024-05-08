@@ -119,6 +119,10 @@ client.on('message', async msg => {
         msg.reply('pong');
         console.log(msg.from)
     }
+    
+    if(msg.body == '!keyword'){
+        msg.reply('!buatkelompok : Membuat kelompok\n!carikelompok : mencari kelompok berdasarkan nama\n!yt <link> : mengunduh video youtube');
+    }
 
 
     if (msg.body.startsWith('!sticker') && msg.type == 'image'){
